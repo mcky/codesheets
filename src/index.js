@@ -1,4 +1,5 @@
 import R from 'ramda'
+import toposort from 'toposort'
 
 const computable = (dependencies, formula) => ({
 	computable: true,
@@ -20,18 +21,24 @@ const sheet = {
 	F1: constant(12),
 }
 
-const traverseDependencies = (ref, sheet) => {
-	const cell = sheet[ref]
+const getDependencyOrder = R.pipe(
+	R.toPairs,
+	R.reduce(
+		(acc, [reference, value]) =>
+			value.constant
+				? R.append([reference, 'init'], acc)
+				: R.concat(
+						acc,
+						value.dependencies.map(dependency => [
+							reference,
+							dependency,
+						]),
+					),
+		[],
+	),
+	toposort,
+	R.reverse,
+	R.reject(R.equals('init')),
+)
 
-	if (cell.constant || R.isEmpty(cell.dependencies)) {
-		return []
-	}
-
-	const dependencies = R.chain(dep => traverseDependencies(dep, sheet))(
-		cell.dependencies,
-	)
-
-	return R.pipe(R.concat(dependencies), R.uniq, R.prepend(ref))(
-		cell.dependencies,
-	)
-}
+console.log(getDependencyOrder(sheet))
