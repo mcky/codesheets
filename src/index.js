@@ -1,6 +1,8 @@
 import R from 'ramda'
 import toposort from 'toposort'
 
+import './index.css'
+
 const delay = ms =>
 	new Promise(resolve => {
 		setTimeout(resolve, ms)
@@ -45,6 +47,29 @@ const sheet = {
 	}),
 }
 
+const getCellList = (rows, columns) => {
+	const alphabet = R.pipe(R.split(''), R.take(rows))(
+		'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+	)
+	const numbers = R.pipe(R.range(0), R.map(R.inc))(rows)
+	return numbers.map(n => alphabet.map(l => `${l}${n}`))
+}
+
+const renderTable = (cells, values) => {
+	document.body.innerHTML = `
+	<table>
+	  ${cells
+			.map(row => `<tr>
+	  		${row
+				.map(cell => [cell, values[cell] || ''])
+				.map(([cell, value]) => `<td data-cell="${cell}">${value}</td>`)
+				.join('')}
+	  </tr>`)
+			.join('')}
+	</table>
+	`
+}
+
 const getDependencyOrder = R.pipe(
 	R.toPairs,
 	R.reduce(
@@ -64,8 +89,6 @@ const getDependencyOrder = R.pipe(
 	R.reverse,
 	R.reject(R.equals('init')),
 )
-
-console.log(getDependencyOrder(sheet))
 
 const resolveSheetValues = (computationOrder, sheet, sheetValues = {}) =>
 	computationOrder.reduce(
@@ -87,4 +110,5 @@ const resolveSheetValues = (computationOrder, sheet, sheetValues = {}) =>
 
 resolveSheetValues(getDependencyOrder(sheet), sheet).then(values => {
 	console.log(values)
+	renderTable(getCellList(10, 10), values)
 })
