@@ -1,3 +1,5 @@
+import R from 'ramda'
+
 const computable = (dependencies, formula) => ({
 	computable: true,
 	dependencies,
@@ -16,4 +18,20 @@ const sheet = {
 	D1: constant(3),
 	E1: computable(['A1'], A1 => A1 + 5),
 	F1: constant(12),
+}
+
+const traverseDependencies = (ref, sheet) => {
+	const cell = sheet[ref]
+
+	if (cell.constant || R.isEmpty(cell.dependencies)) {
+		return []
+	}
+
+	const dependencies = R.chain(dep => traverseDependencies(dep, sheet))(
+		cell.dependencies,
+	)
+
+	return R.pipe(R.concat(dependencies), R.uniq, R.prepend(ref))(
+		cell.dependencies,
+	)
 }
