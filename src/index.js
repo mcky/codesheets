@@ -9,7 +9,7 @@ const delay = ms =>
 const computable = (dependencies, formula) => ({
 	computable: true,
 	dependencies,
-	formula,
+	formula: (...args) => Promise.resolve(formula(...args)),
 })
 
 const constant = val => ({
@@ -68,18 +68,26 @@ const getDependencyOrder = R.pipe(
 console.log(getDependencyOrder(sheet))
 
 const resolveSheetValues = (computationOrder, sheet, sheetValues = {}) =>
-	computationOrder.reduce((values, reference) => {
-		const cell = sheet[reference]
+	computationOrder.reduce(
+		(previousCell, reference) =>
+			previousCell.then(values => {
+				const cell = sheet[reference]
 
-		if (cell.constant) {
-			return R.assoc(reference, cell.value, values)
-		} else if (cell.formula) {
-			const depValues = cell.dependencies.map(
-				reference => values[reference],
-			)
-			const cellValue = cell.formula(...depValues)
-			return R.assoc(reference, cellValue, values)
-		}
-	}, sheetValues)
+				if (cell.constant) {
+					return R.assoc(reference, cell.value, values)
+				} else if (cell.formula) {
+					const depValues = cell.dependencies.map(
+						reference => values[reference],
+					)
 
-console.log(resolveSheetValues(getDependencyOrder(sheet), sheet))
+					return cell
+						.formula(...depValues)
+						.then(R.assoc(reference, R.__, values))
+				}
+			}),
+		Promise.resolve(sheetValues),
+	)
+
+resolveSheetValues(getDependencyOrder(sheet), sheet).then(values => {
+	console.log(values)
+})
