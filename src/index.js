@@ -9,7 +9,7 @@ const delay = ms =>
 const computable = (dependencies, formula) => ({
 	computable: true,
 	dependencies,
-	formula: (...args) => Promise.resolve(formula(...args)),
+	formula: R.memoize((...args) => Promise.resolve(formula(...args))),
 })
 
 const constant = val => ({
