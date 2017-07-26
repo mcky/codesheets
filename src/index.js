@@ -73,17 +73,14 @@ const resolveSheetValues = (computationOrder, sheet, sheetValues = {}) =>
 			previousCell.then(values => {
 				const cell = sheet[reference]
 
-				if (cell.constant) {
-					return R.assoc(reference, cell.value, values)
-				} else if (cell.formula) {
-					const depValues = cell.dependencies.map(
-						reference => values[reference],
-					)
-
-					return cell
-						.formula(...depValues)
-						.then(R.assoc(reference, R.__, values))
-				}
+				return Promise.resolve(
+					cell.constant
+						? cell.value
+						: R.apply(
+								cell.formula,
+								R.props(cell.dependencies, values),
+							),
+				).then(R.assoc(reference, R.__, values))
 			}),
 		Promise.resolve(sheetValues),
 	)
