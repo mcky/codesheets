@@ -79,12 +79,14 @@ const renderTable = (cells, values) => {
 	`
 }
 
-let pushValue
+let pushValue = (...args) => {
+	console.log('event missed:', args)
+}
 
 const $values = create((add, end, error) => {
 	pushValue = add
 	return () => console.log('dispose valuestream')
-}).scan((values, [ref, cell]) => R.assoc(ref, cell, values), {})
+})
 
 const $stream = most
 	.from(R.toPairs(sheet))
@@ -110,10 +112,14 @@ const $stream = most
 				}
 			}),
 	)
-	.map(cellPromise => cellPromise.then(pushValue))
-	.drain()
+	.flatMap(p => most.fromPromise(p))
+	.scan((values, [ref, cell]) => R.assoc(ref, cell, values), {})
 
-$values.observe(values => {
+$stream.forEach(value => {
+	pushValue(value)
+})
+
+$stream.observe(values => {
 	console.log(values)
 	renderTable(getCellList(10, 10), values)
 })
