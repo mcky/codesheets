@@ -1,7 +1,10 @@
 import R from 'ramda'
-import toposort from 'toposort'
+import * as most from 'most'
+import { create } from '@most/create'
 
 import './index.css'
+
+const hasProps = R.curry((props, obj) => props.every(prop => obj[prop]))
 
 const delay = ms =>
 	new Promise(resolve => {
@@ -70,45 +73,41 @@ const renderTable = (cells, values) => {
 	`
 }
 
-const getDependencyOrder = R.pipe(
-	R.toPairs,
-	R.reduce(
-		(acc, [reference, value]) =>
-			value.constant
-				? R.append([reference, 'init'], acc)
-				: R.concat(
-						acc,
-						value.dependencies.map(dependency => [
-							reference,
-							dependency,
-						]),
-					),
-		[],
-	),
-	toposort,
-	R.reverse,
-	R.reject(R.equals('init')),
-)
+let pushValue
 
-const resolveSheetValues = (computationOrder, sheet, sheetValues = {}) =>
-	computationOrder.reduce(
-		(previousCell, reference) =>
-			previousCell.then(values => {
-				const cell = sheet[reference]
+const $values = create((add, end, error) => {
+	pushValue = add
+	return () => console.log('dispose valuestream')
+}).scan((values, [ref, cell]) => R.assoc(ref, cell, values), {})
 
-				return Promise.resolve(
-					cell.constant
-						? cell.value
-						: R.apply(
+const $stream = most
+	.from(R.toPairs(sheet))
+	.map(
+		([cellReference, cell]) =>
+			new Promise(resolve => {
+				if (!cell || cell.constant) {
+					resolve([cellReference, cell.value])
+				} else {
+					most
+						.from($values)
+						.filter(hasProps(cell.dependencies))
+						.skipAfter(hasProps(cell.dependencies))
+						.map(values => {
+							return R.apply(
 								cell.formula,
 								R.props(cell.dependencies, values),
-							),
-				).then(R.assoc(reference, R.__, values))
+							).then(cellValue => {
+								resolve([cellReference, cellValue])
+							})
+						})
+						.drain()
+				}
 			}),
-		Promise.resolve(sheetValues),
 	)
+	.map(cellPromise => cellPromise.then(pushValue))
+	.drain()
 
-resolveSheetValues(getDependencyOrder(sheet), sheet).then(values => {
+$values.observe(values => {
 	console.log(values)
 	renderTable(getCellList(10, 10), values)
 })
