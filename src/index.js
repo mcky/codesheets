@@ -42,3 +42,20 @@ const getDependencyOrder = R.pipe(
 )
 
 console.log(getDependencyOrder(sheet))
+
+const resolveSheetValues = (computationOrder, sheet, sheetValues = {}) =>
+	computationOrder.reduce((values, reference) => {
+		const cell = sheet[reference]
+
+		if (cell.constant) {
+			return R.assoc(reference, cell.value, values)
+		} else if (cell.formula) {
+			const depValues = cell.dependencies.map(
+				reference => values[reference],
+			)
+			const cellValue = cell.formula(...depValues)
+			return R.assoc(reference, cellValue, values)
+		}
+	}, sheetValues)
+
+console.log(resolveSheetValues(getDependencyOrder(sheet), sheet))
