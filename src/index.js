@@ -24,6 +24,12 @@ const constant = val => ({
 
 const sheet = {
 	A1: constant(50),
+	A2: computable([], () =>
+		fetch('https://api.punkapi.com/v2/beers/random')
+			.then(res => res.json())
+			.then(R.head)
+			.then(R.prop('name')),
+	),
 	A4: constant(30),
 	B1: constant(7),
 	C1: computable(['E1', 'B1'], (E1, B1) => {
