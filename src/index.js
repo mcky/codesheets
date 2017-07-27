@@ -106,6 +106,8 @@ const $changes = create((add, end, error) => {
 	return () => console.log('dispose changes')
 }).merge(most.from(R.toPairs(sheet)))
 
+const hasRefWithValue = ref => R.where({ 0: R.equals(ref), 1: R.has('value') })
+
 const $constantValues = most
 	.from($changes)
 	.filter(([ref, cell]) => cell.constant)
@@ -117,17 +119,15 @@ const $formulaValues = most
 	.map(([ref, cell]) => {
 		yellow('v', ref, cell)
 
-		const $deps = cell.dependencies.map(dep => {
-			return most
+		const $dependencies = cell.dependencies.map(dep =>
+			most
 				.from($changes)
-				.filter(([depRef]) => depRef === dep)
-				.skipRepeatsWith(
-					(prev, next) => prev[1].value === next[1].value,
-				)
-		})
+				.filter(hasRefWithValue(dep))
+				.skipRepeatsWith(R.equals),
+		)
 
 		return most
-			.mergeArray($deps)
+			.mergeArray($dependencies)
 			.scan((values, [ref, cell]) => R.assoc(ref, cell, values), {})
 			.filter(hasProps(cell.dependencies))
 			.map(values => {
