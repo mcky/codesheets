@@ -54,9 +54,9 @@ const sheet = {
 
 const getCellList = (rows, columns) => {
 	const alphabet = R.pipe(R.split(''), R.take(rows))(
-		'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+		' ABCDEFGHIJKLMNOPQRSTUVWXYZ',
 	)
-	const numbers = R.pipe(R.range(0), R.map(R.inc))(rows)
+	const numbers = R.range(0, rows + 1)
 	return numbers.map(n => alphabet.map(l => `${l}${n}`))
 }
 
@@ -64,10 +64,15 @@ const renderTable = (cells, values) => {
 	document.body.innerHTML = `
 	<table>
 	  ${cells
-			.map(row => `<tr>
+			.map((row, i) => `<tr>
 	  		${row
-				.map(cell => [cell, values[cell] || ''])
-				.map(([cell, value]) => `<td data-cell="${cell}">${value}</td>`)
+				.map((cell, j) => {
+					const value = values[cell] || ''
+					const valueOrHeader = i === 0 ? R.dropLast(1, cell) : j === 0 ? R.drop(1, cell) : value
+					const color = i === 0 || j === 0 ? '#CCC' : sheet[cell] ? '#fffcdb' : 'none'
+					return [cell, valueOrHeader, color]
+				})
+				.map(([cell, value, color]) => `<td data-cell="${cell}" style="background: ${color}">${value}</td>`)
 				.join('')}
 	  </tr>`)
 			.join('')}
