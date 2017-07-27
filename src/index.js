@@ -82,47 +82,91 @@ const [blue, red, yellow, green] = colors.map(color => (name, ...msg) =>
 		`background: ${color}; padding: 4px; line-height: 1.3em;`,
 	))
 
-let pushValue = (...args) => {
+let change = (...args) => {
 	console.log('event missed:', args)
 }
 
-const $values = create((add, end, error) => {
-	pushValue = add
-	return () => console.log('dispose valuestream')
+const $changes = create((add, end, error) => {
+	window.change = change = add
+	return () => console.log('dispose changes')
 })
 
-const $stream = most
-	.from(R.toPairs(sheet))
-	.map(
-		([cellReference, cell]) =>
-			new Promise(resolve => {
-				if (!cell || cell.constant) {
-					resolve([cellReference, cell.value])
-				} else {
-					most
-						.from($values)
-						.filter(hasProps(cell.dependencies))
-						.skipAfter(hasProps(cell.dependencies))
-						.map(values => {
-							return R.apply(
-								cell.formula,
-								R.props(cell.dependencies, values),
-							).then(cellValue => {
-								resolve([cellReference, cellValue])
-							})
-						})
-						.drain()
-				}
-			}),
-	)
-	.flatMap(p => most.fromPromise(p))
+const $constantValues = most
+	.from($changes)
+	.filter(([ref, cell]) => cell.constant)
+	.map(([ref, cell]) => [ref, cell.value])
+
+const $formulaValues = most
+	.from($changes)
+	.filter(([ref, cell]) => cell.computable)
+	.map(([ref, cell]) => {
+		yellow('v', ref, cell)
+
+		const $deps = cell.dependencies.map(dep => {
+			return most
+				.from($changes)
+				.filter(([depRef]) => depRef === dep)
+				.skipRepeatsWith(
+					(prev, next) => prev[1].value === next[1].value,
+				)
+		})
+
+		return most
+			.mergeArray($deps)
+			.scan((values, [ref, cell]) => R.assoc(ref, cell, values), {})
+			.filter(hasProps(cell.dependencies))
+			.map(values => {
+				// @TODO: How will this work with formulas referencing formulas?
+				const data = R.pipe(
+					R.props(cell.dependencies),
+					R.map(R.prop('value')),
+				)(values)
+
+				console.log('data', data)
+
+				return R.apply(cell.formula, data)
+			})
+			.flatMap(p => most.fromPromise(p))
+			.map(endVal => {
+				return [ref, endVal]
+			})
+	})
+	.join()
+
+$constantValues.observe(x => {
+	console.log('$c', x)
+})
+
+$formulaValues.observe(x => {
+	console.log('$f', x)
+})
+
+const $sheet = most
+	.mergeArray([$constantValues, $formulaValues])
 	.scan((values, [ref, cell]) => R.assoc(ref, cell, values), {})
 
-$stream.forEach(value => {
-	pushValue(value)
+most.from($changes).observe(c => {
+	blue('$change', c)
 })
 
-$stream.observe(values => {
-	console.log(values)
-	renderTable(getCellList(10, 10), values)
+$sheet.observe(x => {
+	red('$', x)
 })
+
+setTimeout(() => {
+	change(['A1', constant(10)])
+}, 500)
+
+setTimeout(() => {
+	// Currently dropping the A1 before
+	// as it isn't listening yet
+	change(['C1', computable(['A1', 'B1'], (A1, B1) => A1 + B1)])
+}, 1000)
+
+setTimeout(() => {
+	change(['A1', constant(20)])
+}, 1500)
+
+setTimeout(() => {
+	change(['B1', constant(10)])
+}, 2000)
