@@ -94,7 +94,7 @@ let change = (...args) => {
 const $changes = create((add, end, error) => {
 	window.change = change = add
 	return () => console.log('dispose changes')
-})
+}).merge(most.from(R.toPairs(sheet)))
 
 const $constantValues = most
 	.from($changes)
@@ -157,21 +157,3 @@ most.from($changes).observe(c => {
 $sheet.observe(x => {
 	red('$', x)
 })
-
-setTimeout(() => {
-	change(['A1', constant(10)])
-}, 500)
-
-setTimeout(() => {
-	// Currently dropping the A1 before
-	// as it isn't listening yet
-	change(['C1', computable(['A1', 'B1'], (A1, B1) => A1 + B1)])
-}, 1000)
-
-setTimeout(() => {
-	change(['A1', constant(20)])
-}, 1500)
-
-setTimeout(() => {
-	change(['B1', constant(10)])
-}, 2000)
