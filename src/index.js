@@ -107,6 +107,7 @@ const $changes = create((add, end, error) => {
 }).merge(most.from(R.toPairs(sheet)))
 
 const hasRefWithValue = ref => R.where({ 0: R.equals(ref), 1: R.has('value') })
+const scanPairs = (values, [ref, cell]) => R.assoc(ref, cell, values)
 
 const $constantValues = most
 	.from($changes)
@@ -117,8 +118,6 @@ const $formulaValues = most
 	.from($changes)
 	.filter(([ref, cell]) => cell.computable)
 	.map(([ref, cell]) => {
-		yellow('v', ref, cell)
-
 		const $dependencies = cell.dependencies.map(dep =>
 			most
 				.from($changes)
@@ -128,42 +127,34 @@ const $formulaValues = most
 
 		return most
 			.mergeArray($dependencies)
-			.scan((values, [ref, cell]) => R.assoc(ref, cell, values), {})
+			.scan(scanPairs, {})
 			.filter(hasProps(cell.dependencies))
 			.map(values => {
-				// @TODO: How will this work with formulas referencing formulas?
 				const data = R.pipe(
 					R.props(cell.dependencies),
 					R.map(R.prop('value')),
 				)(values)
 
-				console.log('data', data)
-
 				return R.apply(cell.formula, data)
 			})
 			.flatMap(p => most.fromPromise(p))
-			.map(endVal => {
-				return [ref, endVal]
-			})
+			.map(value => [ref, value])
 	})
 	.join()
 
-$constantValues.observe(x => {
-	console.log('$c', x)
-})
-
-$formulaValues.observe(x => {
-	console.log('$f', x)
+$formulaValues.observe(([ref, value]) => {
+	change([ref, constant(value)])
 })
 
 const $sheet = most
 	.mergeArray([$constantValues, $formulaValues])
-	.scan((values, [ref, cell]) => R.assoc(ref, cell, values), {})
+	.scan(scanPairs, {})
 
 most.from($changes).observe(c => {
 	blue('$change', c)
 })
 
-$sheet.observe(x => {
-	red('$', x)
+$sheet.observe(values => {
+	red('$p', values)
+	renderTable(getCellList(10, 10), values)
 })
