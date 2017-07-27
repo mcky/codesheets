@@ -31,7 +31,17 @@ const sheet = {
 			.then(R.head)
 			.then(R.prop('name')),
 	),
+	A3: computable(['A1'], A1 =>
+		delay(20).then(() => `computed ${A1} from A1`),
+	),
 	A4: constant(30),
+
+	A5: computable(['A1', 'A4'], (A1, A3) =>
+		delay(3000).then(() => `A1:${A1} - A3:${A3}`),
+	),
+
+	A6: computable(['A5'], A5 => delay(20).then(() => `A5: ${A5}`)),
+
 	B1: constant(7),
 	C1: computable(['E1', 'B1'], (E1, B1) => {
 		return `E1: ${E1}, B1: ${B1}!`
@@ -48,7 +58,7 @@ const sheet = {
 		return A1 * A4
 	}),
 	H2: computable(['H1'], H1 => {
-		return `Waiting for H1.. ${H1 * 2}`
+		return `H1*2 = ${H1 * 2}`
 	}),
 }
 
