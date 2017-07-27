@@ -12,52 +12,52 @@ const delay = ms =>
 		setTimeout(resolve, ms)
 	})
 
-const computable = (dependencies, formula) => ({
-	computable: true,
+const formula = (dependencies, formula) => ({
+	isFormula: true,
 	dependencies,
 	formula: R.memoize((...args) => Promise.resolve(formula(...args))),
 })
 
 const constant = val => ({
-	constant: true,
+	isConstant: true,
 	value: val,
 })
 
 const sheet = {
 	A1: constant(50),
-	A2: computable([], () =>
+	A2: formula([], () =>
 		fetch('https://api.punkapi.com/v2/beers/random')
 			.then(res => res.json())
 			.then(R.head)
 			.then(R.prop('name')),
 	),
-	A3: computable(['A1'], A1 =>
+	A3: formula(['A1'], A1 =>
 		delay(20).then(() => `computed ${A1} from A1`),
 	),
 	A4: constant(30),
 
-	A5: computable(['A1', 'A4'], (A1, A3) =>
+	A5: formula(['A1', 'A4'], (A1, A3) =>
 		delay(3000).then(() => `A1:${A1} - A3:${A3}`),
 	),
 
-	A6: computable(['A5'], A5 => delay(20).then(() => `A5: ${A5}`)),
+	A6: formula(['A5'], A5 => delay(20).then(() => `A5: ${A5}`)),
 
 	B1: constant(7),
-	C1: computable(['E1', 'B1'], (E1, B1) => {
+	C1: formula(['E1', 'B1'], (E1, B1) => {
 		return `E1: ${E1}, B1: ${B1}!`
 	}),
 	D1: constant(3),
-	E1: computable(['A1'], A1 => {
+	E1: formula(['A1'], A1 => {
 		return A1 + 5
 	}),
 	F1: constant(12),
-	H1: computable(['B1'], B1 => {
+	H1: formula(['B1'], B1 => {
 		return delay(4000).then(() => B1 * 10)
 	}),
-	G7: computable(['A1', 'A4'], (A1, A4) => {
+	G7: formula(['A1', 'A4'], (A1, A4) => {
 		return A1 * A4
 	}),
-	H2: computable(['H1'], H1 => {
+	H2: formula(['H1'], H1 => {
 		return `H1*2 = ${H1 * 2}`
 	}),
 }
@@ -111,12 +111,12 @@ const scanPairs = (values, [ref, cell]) => R.assoc(ref, cell, values)
 
 const $constantValues = most
 	.from($changes)
-	.filter(([ref, cell]) => cell.constant)
+	.filter(([ref, cell]) => cell.isConstant)
 	.map(([ref, cell]) => [ref, cell.value])
 
 const $formulaValues = most
 	.from($changes)
-	.filter(([ref, cell]) => cell.computable)
+	.filter(([ref, cell]) => cell.isFormula)
 	.map(([ref, cell]) => {
 		const $dependencies = cell.dependencies.map(dep =>
 			most
