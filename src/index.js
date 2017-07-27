@@ -1,6 +1,7 @@
 import R from 'ramda'
 import * as most from 'most'
 import { create } from '@most/create'
+import util from 'util'
 
 import './index.css'
 
@@ -33,25 +34,20 @@ const sheet = {
 	A4: constant(30),
 	B1: constant(7),
 	C1: computable(['E1', 'B1'], (E1, B1) => {
-		console.log('computing C1 (From E1, B1)', E1, B1)
 		return `E1: ${E1}, B1: ${B1}!`
 	}),
 	D1: constant(3),
 	E1: computable(['A1'], A1 => {
-		console.log('computing E1 (from A1)', A1)
 		return A1 + 5
 	}),
 	F1: constant(12),
 	H1: computable(['B1'], B1 => {
-		console.log('computing H1 (from B1) ..slowly', B1)
 		return delay(4000).then(() => B1 * 10)
 	}),
 	G7: computable(['A1', 'A4'], (A1, A4) => {
-		console.log('computing C1 (From A1, A4)', A1, A4)
 		return A1 * A4
 	}),
 	H2: computable(['H1'], H1 => {
-		console.log('computing H2 (from H2)', H1)
 		return `Waiting for H1.. ${H1 * 2}`
 	}),
 }
@@ -78,6 +74,13 @@ const renderTable = (cells, values) => {
 	</table>
 	`
 }
+
+const colors = ['#6ea5fd', '#fd6e6e', '#fffcdb', '#b1eca4']
+const [blue, red, yellow, green] = colors.map(color => (name, ...msg) =>
+	console.log(
+		`%c ${name} ${util.inspect(msg, { depth: Infinity })}`,
+		`background: ${color}; padding: 4px; line-height: 1.3em;`,
+	))
 
 let pushValue = (...args) => {
 	console.log('event missed:', args)
