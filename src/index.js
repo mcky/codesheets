@@ -4,11 +4,17 @@ import R from 'ramda'
 import * as most from 'most'
 import { create } from '@most/create'
 
+import {
+	hasProps,
+	hasRefWithValue,
+	scanPairs,
+	getCellList,
+	cellIndexFromRef,
+} from './utils'
+
 import SpreadsheetContainer from './containers/SpreadsheetContainer'
 
 import './index.css'
-
-const hasProps = R.curry((props, obj) => props.every(prop => obj[prop]))
 
 const delay = ms =>
 	new Promise(resolve => {
@@ -74,9 +80,6 @@ const change$ = create((add, end, error) => {
 	return () => console.log('dispose changes')
 }).merge(most.from(R.toPairs(sheet)))
 
-const hasRefWithValue = ref => R.where({ 0: R.equals(ref), 1: R.has('value') })
-const scanPairs = (values, [ref, cell]) => R.assoc(ref, cell, values)
-
 const constantValue$ = most
 	.from(change$)
 	.filter(([ref, cell]) => cell.isConstant)
@@ -114,23 +117,7 @@ formulaValue$.observe(([ref, value]) => {
 	change([ref, constant(value)])
 })
 
-const getCellList = (rows, columns) => R.repeat(R.repeat(null, rows), columns)
-
 const INITIAL_CELLS = getCellList(10, 10)
-
-const charIndex = char => parseInt(char, 36) - 10
-
-const cellIndexFromRef = R.pipe(
-	R.toUpper,
-	R.split(''),
-	R.map(cell => (isNaN(Number(cell)) ? cell : Number(cell))),
-	R.partition(R.is(Number)),
-	([numbers, letters]) => {
-		const x = letters.map((l, i) => charIndex(l) + i * 26).reduce(R.add)
-		const y = Number(numbers.join('')) - 1
-		return [y, x]
-	},
-)
 
 const value$ = most
 	.mergeArray([constantValue$, formulaValue$])
