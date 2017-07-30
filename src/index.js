@@ -61,14 +61,6 @@ const sheet = {
 	}),
 }
 
-const getCellList = (rows, columns) => {
-	const alphabet = R.pipe(R.split(''), R.take(rows))(
-		' ABCDEFGHIJKLMNOPQRSTUVWXYZ',
-	)
-	const numbers = R.range(0, rows + 1)
-	return numbers.map(n => alphabet.map(l => `${l}${n}`))
-}
-
 let change = (...args) => {
 	console.log('event missed:', args)
 }
@@ -118,8 +110,32 @@ $formulaValues.observe(([ref, value]) => {
 	change([ref, constant(value)])
 })
 
+const getCellList = (rows, columns) =>
+	R.range(0, rows).map(R.always(R.range(0, columns).map(R.always(null))))
+
+const INITIAL_CELLS = getCellList(10, 10)
+
+const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
+const cellIndexFromRef = R.pipe(
+	R.toUpper,
+	R.split(''),
+	R.map(cell => (isNaN(Number(cell)) ? cell : Number(cell))),
+	R.partition(R.is(Number)),
+	([numbers, letters]) => {
+		const x = letters
+			.map((l, i) => R.indexOf(l, alphabet) + i * 26)
+			.reduce(R.add)
+		const y = Number(numbers.join('')) - 1
+		return [y, x]
+	},
+)
+
 const $sheet = most
 	.mergeArray([$constantValues, $formulaValues])
-	.scan(scanPairs, {})
+	.scan((matrix, [ref, value]) => {
+		const [y, x] = cellIndexFromRef(ref)
+		return R.assocPath([y, x], value, matrix)
+	}, INITIAL_CELLS)
 
 
