@@ -1,6 +1,10 @@
+import React from 'react'
+import ReactDOM from 'react-dom'
 import R from 'ramda'
 import * as most from 'most'
 import { create } from '@most/create'
+
+import SpreadsheetContainer from './containers/SpreadsheetContainer'
 
 import './index.css'
 
@@ -138,4 +142,8 @@ const $sheet = most
 		return R.assocPath([y, x], value, matrix)
 	}, INITIAL_CELLS)
 
+const Spreadsheet = SpreadsheetContainer($sheet)
 
+const App = () => <Spreadsheet />
+
+ReactDOM.render(<App />, document.getElementById('root'))
