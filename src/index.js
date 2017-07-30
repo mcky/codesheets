@@ -69,7 +69,7 @@ let change = (...args) => {
 	console.log('event missed:', args)
 }
 
-const $changes = create((add, end, error) => {
+const change$ = create((add, end, error) => {
 	window.change = change = add
 	return () => console.log('dispose changes')
 }).merge(most.from(R.toPairs(sheet)))
@@ -77,18 +77,18 @@ const $changes = create((add, end, error) => {
 const hasRefWithValue = ref => R.where({ 0: R.equals(ref), 1: R.has('value') })
 const scanPairs = (values, [ref, cell]) => R.assoc(ref, cell, values)
 
-const $constantValues = most
-	.from($changes)
+const constantValue$ = most
+	.from(change$)
 	.filter(([ref, cell]) => cell.isConstant)
 	.map(([ref, cell]) => [ref, cell.value])
 
-const $formulaValues = most
-	.from($changes)
+const formulaValue$ = most
+	.from(change$)
 	.filter(([ref, cell]) => cell.isFormula)
 	.map(([ref, cell]) => {
 		const $dependencies = cell.dependencies.map(dep =>
 			most
-				.from($changes)
+				.from(change$)
 				.filter(hasRefWithValue(dep))
 				.skipRepeatsWith(R.equals),
 		)
@@ -110,7 +110,7 @@ const $formulaValues = most
 	})
 	.join()
 
-$formulaValues.observe(([ref, value]) => {
+formulaValue$.observe(([ref, value]) => {
 	change([ref, constant(value)])
 })
 
@@ -135,14 +135,14 @@ const cellIndexFromRef = R.pipe(
 	},
 )
 
-const $sheet = most
-	.mergeArray([$constantValues, $formulaValues])
+const value$ = most
+	.mergeArray([constantValue$, formulaValue$])
 	.scan((matrix, [ref, value]) => {
 		const [y, x] = cellIndexFromRef(ref)
 		return R.assocPath([y, x], value, matrix)
 	}, INITIAL_CELLS)
 
-const Spreadsheet = SpreadsheetContainer($sheet)
+const Spreadsheet = SpreadsheetContainer(value$)
 
 const App = () => <Spreadsheet />
 
