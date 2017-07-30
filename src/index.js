@@ -114,12 +114,11 @@ formulaValue$.observe(([ref, value]) => {
 	change([ref, constant(value)])
 })
 
-const getCellList = (rows, columns) =>
-	R.range(0, rows).map(R.always(R.range(0, columns).map(R.always(null))))
+const getCellList = (rows, columns) => R.repeat(R.repeat(null, rows), columns)
 
 const INITIAL_CELLS = getCellList(10, 10)
 
-const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+const charIndex = char => parseInt(char, 36) - 10
 
 const cellIndexFromRef = R.pipe(
 	R.toUpper,
@@ -127,9 +126,7 @@ const cellIndexFromRef = R.pipe(
 	R.map(cell => (isNaN(Number(cell)) ? cell : Number(cell))),
 	R.partition(R.is(Number)),
 	([numbers, letters]) => {
-		const x = letters
-			.map((l, i) => R.indexOf(l, alphabet) + i * 26)
-			.reduce(R.add)
+		const x = letters.map((l, i) => charIndex(l) + i * 26).reduce(R.add)
 		const y = Number(numbers.join('')) - 1
 		return [y, x]
 	},
