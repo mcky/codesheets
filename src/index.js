@@ -1,7 +1,6 @@
 import R from 'ramda'
 import * as most from 'most'
 import { create } from '@most/create'
-import util from 'util'
 
 import './index.css'
 
@@ -70,33 +69,6 @@ const getCellList = (rows, columns) => {
 	return numbers.map(n => alphabet.map(l => `${l}${n}`))
 }
 
-const renderTable = (cells, values) => {
-	document.body.innerHTML = `
-	<table>
-	  ${cells
-			.map((row, i) => `<tr>
-	  		${row
-				.map((cell, j) => {
-					const value = values[cell] || ''
-					const valueOrHeader = i === 0 ? R.dropLast(1, cell) : j === 0 ? R.drop(1, cell) : value
-					const color = i === 0 || j === 0 ? '#CCC' : sheet[cell] ? '#fffcdb' : 'none'
-					return [cell, valueOrHeader, color]
-				})
-				.map(([cell, value, color]) => `<td data-cell="${cell}" style="background: ${color}">${value}</td>`)
-				.join('')}
-	  </tr>`)
-			.join('')}
-	</table>
-	`
-}
-
-const colors = ['#6ea5fd', '#fd6e6e', '#fffcdb', '#b1eca4']
-const [blue, red, yellow, green] = colors.map(color => (name, ...msg) =>
-	console.log(
-		`%c ${name} ${util.inspect(msg, { depth: Infinity })}`,
-		`background: ${color}; padding: 4px; line-height: 1.3em;`,
-	))
-
 let change = (...args) => {
 	console.log('event missed:', args)
 }
@@ -150,11 +122,4 @@ const $sheet = most
 	.mergeArray([$constantValues, $formulaValues])
 	.scan(scanPairs, {})
 
-most.from($changes).observe(c => {
-	blue('$change', c)
-})
 
-$sheet.observe(values => {
-	red('$p', values)
-	renderTable(getCellList(10, 10), values)
-})
