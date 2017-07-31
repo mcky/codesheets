@@ -85,10 +85,13 @@ const constantValue$ = most
 	.filter(([ref, cell]) => cell.isConstant)
 	.map(([ref, cell]) => [ref, cell.value])
 
-const formulaValue$ = most
+const formulaChange$ = most
 	.from(change$)
 	.filter(([ref, cell]) => cell.isFormula)
-	.map(([ref, cell]) => {
+
+const formulaValue$ = most
+	.from(formulaChange$)
+	.map(([ref, cell, test]) => {
 		const $dependencies = cell.dependencies.map(dep =>
 			most
 				.from(change$)
@@ -96,8 +99,14 @@ const formulaValue$ = most
 				.skipRepeatsWith(R.equals),
 		)
 
+		const updatedFormula$ = most
+			.from(formulaChange$)
+			.skip(2)
+			.filter(([changedFormulaRef]) => changedFormulaRef === ref)
+
 		return most
 			.mergeArray($dependencies)
+			.until(updatedFormula$)
 			.scan(scanPairs, {})
 			.filter(hasProps(cell.dependencies))
 			.map(values => {
