@@ -117,13 +117,14 @@ formulaValue$.observe(([ref, value]) => {
 	change([ref, constant(value)])
 })
 
-const INITIAL_CELLS = getCellList(10, 10)
+const EMPTY_CELL = { value: null, width: 35, className: 'SpreadsheetCell' }
+const INITIAL_CELLS = getCellList(10, 10, EMPTY_CELL)
 
 const value$ = most
 	.mergeArray([constantValue$, formulaValue$])
 	.scan((matrix, [ref, value]) => {
 		const [y, x] = cellIndexFromRef(ref)
-		return R.assocPath([y, x], value, matrix)
+		return R.assocPath([y, x, 'value'], value, matrix)
 	}, INITIAL_CELLS)
 
 const Spreadsheet = SpreadsheetContainer(value$)

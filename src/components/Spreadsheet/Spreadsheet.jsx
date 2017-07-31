@@ -1,19 +1,16 @@
 import React from 'react'
 
-const Spreadsheet = ({ values }) => (
-	<div>
-		<table>
-			<tbody>
-				{values.map((row, i) => (
-					<tr key={i}>
-						{row.map((value, j) => {
-							return <td key={`${i}-${j}`}>{value}</td>
-						})}
-					</tr>
-				))}
-			</tbody>
-		</table>
-	</div>
-)
+import ReactDataSheet from 'react-datasheet'
+import 'react-datasheet/lib/react-datasheet.css'
+
+const Spreadsheet = ({ values }) => {
+  return (
+    <ReactDataSheet
+      data={values}
+      valueRenderer={cell => cell.value || ''}
+      overflow="clip"
+    />
+  )
+}
 
 export default Spreadsheet

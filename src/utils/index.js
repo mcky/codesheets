@@ -20,7 +20,7 @@ const hasRefWithValue = ref => where({ 0: equals(ref), 1: has('value') })
 
 const scanPairs = (values, [ref, cell]) => assoc(ref, cell, values)
 
-const getCellList = (rows, columns) => repeat(repeat(null, rows), columns)
+const getCellList = (rows, columns, cell) => repeat(repeat(cell, rows), columns)
 
 const charIndex = char => parseInt(char, 36) - 10
 
