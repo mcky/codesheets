@@ -112,6 +112,13 @@ const formulaValue$ = most
 			.filter(([changedFormulaRef]) => changedFormulaRef === ref)
 			.filter(([, , lastUpdatedAt]) => lastUpdatedAt !== updatedAt)
 
+		if (R.isEmpty(cell.dependencies)) {
+			return most
+				.fromPromise(cell.formula())
+				.until(updatedFormula$)
+				.map(value => [ref, value])
+		}
+
 		return most
 			.from(accumulatedValue$)
 			.until(updatedFormula$)
