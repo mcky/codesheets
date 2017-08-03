@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "@most/create": "^2.0.1",
+    "@most/hold": "^2.0.0",
     "most": "^1.5.0",
     "ramda": "^0.24.1",
     "react": "^15.6.1",

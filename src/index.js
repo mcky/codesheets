@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom'
 import R from 'ramda'
 import * as most from 'most'
 import { create } from '@most/create'
+import { hold } from '@most/hold'
 
 import {
 	hasProps,
@@ -77,8 +78,19 @@ let change = (...args) => {
 
 const change$ = create((add, end, error) => {
 	window.change = change = add
+
+	const startTime = Date.now()
+
+	R.pipe(
+		R.toPairs,
+		R.map(R.append(startTime)),
+		R.forEach(pair => {
+			change(pair)
+		}),
+	)(sheet)
+
 	return () => console.log('dispose changes')
-}).merge(most.from(R.toPairs(sheet)))
+})
 
 const constantValue$ = most
 	.from(change$)
@@ -89,42 +101,29 @@ const formulaChange$ = most
 	.from(change$)
 	.filter(([ref, cell]) => cell.isFormula)
 
+const accumulatedValue$ = hold(most.from(constantValue$).scan(scanPairs, {}))
+accumulatedValue$.drain()
+
 const formulaValue$ = most
 	.from(formulaChange$)
-	.map(([ref, cell, test]) => {
-		const $dependencies = cell.dependencies.map(dep =>
-			most
-				.from(change$)
-				.filter(hasRefWithValue(dep))
-				.skipRepeatsWith(R.equals),
-		)
-
+	.map(([ref, cell, updatedAt]) => {
 		const updatedFormula$ = most
 			.from(formulaChange$)
-			.skip(2)
 			.filter(([changedFormulaRef]) => changedFormulaRef === ref)
+			.filter(([, , lastUpdatedAt]) => lastUpdatedAt !== updatedAt)
 
 		return most
-			.mergeArray($dependencies)
+			.from(accumulatedValue$)
 			.until(updatedFormula$)
-			.scan(scanPairs, {})
 			.filter(hasProps(cell.dependencies))
-			.map(values => {
-				const data = R.pipe(
-					R.props(cell.dependencies),
-					R.map(R.prop('value')),
-				)(values)
-
-				return R.apply(cell.formula, data)
-			})
+			.map(R.props(cell.dependencies))
+			.skipRepeatsWith(R.equals)
+			.map(R.apply(cell.formula))
 			.flatMap(p => most.fromPromise(p))
 			.map(value => [ref, value])
 	})
 	.join()
 
-formulaValue$.observe(([ref, value]) => {
-	change([ref, constant(value)])
-})
 
 const EMPTY_CELL = { value: null, width: 35, className: 'SpreadsheetCell' }
 const INITIAL_CELLS = getCellList(10, 10, EMPTY_CELL)
