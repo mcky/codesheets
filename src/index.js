@@ -26,6 +26,7 @@ const formula = (dependencies, formula) => ({
 	isFormula: true,
 	dependencies,
 	formula: R.memoize((...args) => Promise.resolve(formula(...args))),
+	formulaString: formula.toString(),
 })
 
 const constant = val => ({
@@ -95,7 +96,7 @@ const change$ = create((add, end, error) => {
 const constantValue$ = most
 	.from(change$)
 	.filter(([ref, cell]) => cell.isConstant)
-	.map(([ref, cell]) => [ref, cell.value])
+	.map(([ref, cell]) => [ref, cell.value, cell])
 
 const formulaChange$ = most
 	.from(change$)
@@ -127,7 +128,7 @@ const formulaValue$ = most
 			.skipRepeatsWith(R.equals)
 			.map(R.apply(cell.formula))
 			.flatMap(p => most.fromPromise(p))
-			.map(value => [ref, value])
+			.map(value => [ref, value, cell])
 	})
 	.join()
 
@@ -137,9 +138,15 @@ const INITIAL_CELLS = getCellList(10, 10, EMPTY_CELL)
 
 const value$ = most
 	.mergeArray([constantValue$, formulaValue$])
-	.scan((matrix, [ref, value]) => {
+	.scan((matrix, [ref, value, originalCell]) => {
 		const [y, x] = cellIndexFromRef(ref)
-		return R.assocPath([y, x, 'value'], value, matrix)
+
+		return R.over(
+			R.lensPath([y, x]),
+			R.pipe(R.mergeDeepRight(originalCell), R.assoc('value', value)),
+			matrix,
+		)
+
 	}, INITIAL_CELLS)
 
 const Spreadsheet = SpreadsheetContainer(value$)
