@@ -6,6 +6,10 @@ import { create } from '@most/create'
 import { hold } from '@most/hold'
 
 import {
+	constant,
+	formula,
+} from './utils/cells'
+import {
 	hasProps,
 	hasRefWithValue,
 	scanPairs,
@@ -22,17 +26,6 @@ const delay = ms =>
 		setTimeout(resolve, ms)
 	})
 
-const formula = (dependencies, formula) => ({
-	isFormula: true,
-	dependencies,
-	formula: R.memoize((...args) => Promise.resolve(formula(...args))),
-	formulaString: formula.toString(),
-})
-
-const constant = val => ({
-	isConstant: true,
-	value: val,
-})
 
 const sheet = {
 	A1: constant(50),
