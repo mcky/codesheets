@@ -6,6 +6,7 @@
     "@most/create": "^2.0.1",
     "@most/hold": "^2.0.0",
     "most": "^1.5.0",
+    "prop-types": "^15.6.0",
     "ramda": "^0.24.1",
     "react": "^15.6.1",
     "react-datasheet": "^1.2.12",

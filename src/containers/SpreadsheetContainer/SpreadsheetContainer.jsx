@@ -8,7 +8,7 @@ import Spreadsheet from '../../components/Spreadsheet'
 const componentFromStream = componentFromStreamWithConfig(mostConfig)
 
 export default $values => {
-	const SpreadsheetContainer = componentFromStream(props$ => {
+	const SpreadsheetContainer = componentFromStream(() => {
 		const render = values => <Spreadsheet values={values} />
 
 		return most.combine(render, $values)

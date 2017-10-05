@@ -5,9 +5,9 @@ export const constant = val => ({
 	value: val,
 })
 
-export const formula = (dependencies, formula) => ({
+export const formula = (dependencies, formulaFn) => ({
 	isFormula: true,
 	dependencies,
-	formula: memoize((...args) => Promise.resolve(formula(...args))),
-	formulaString: formula.toString(),
+	formula: memoize((...args) => Promise.resolve(formulaFn(...args))),
+	formulaString: formulaFn.toString(),
 })

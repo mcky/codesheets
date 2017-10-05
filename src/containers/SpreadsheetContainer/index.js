@@ -1,2 +1,3 @@
-import SpreadsheetContainer from './SpreadsheetContainer.jsx'
+import SpreadsheetContainer from './SpreadsheetContainer'
+
 export default SpreadsheetContainer

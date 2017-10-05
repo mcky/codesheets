@@ -5,26 +5,19 @@ import * as most from 'most'
 import { create } from '@most/create'
 import { hold } from '@most/hold'
 
-import {
-	hasProps,
-	hasRefWithValue,
-	scanPairs,
-	getCellList,
-	cellIndexFromRef,
-} from './utils'
+import { hasProps, scanPairs, getCellList, cellIndexFromRef } from './utils'
 import SpreadsheetContainer from './containers/SpreadsheetContainer'
 
 import exampleSheet from './example-sheet'
 
 import './index.css'
 
-
 let change = (...args) => {
-	console.log('event missed:', args)
+	console.error('event missed:', args)
 }
 
-const change$ = create((add, end, error) => {
-	window.change = change = add
+const change$ = create(add => {
+	change = add
 
 	const startTime = Date.now()
 
@@ -36,17 +29,15 @@ const change$ = create((add, end, error) => {
 		}),
 	)(exampleSheet)
 
-	return () => console.log('dispose changes')
+	return () => {}
 })
 
 const constantValue$ = most
 	.from(change$)
-	.filter(([ref, cell]) => cell.isConstant)
+	.filter(([, cell]) => cell.isConstant)
 	.map(([ref, cell]) => [ref, cell.value, cell])
 
-const formulaChange$ = most
-	.from(change$)
-	.filter(([ref, cell]) => cell.isFormula)
+const formulaChange$ = most.from(change$).filter(([, cell]) => cell.isFormula)
 
 const accumulatedValue$ = hold(most.from(constantValue$).scan(scanPairs, {}))
 accumulatedValue$.drain()
@@ -78,7 +69,6 @@ const formulaValue$ = most
 	})
 	.join()
 
-
 const EMPTY_CELL = { value: null, width: 35, className: 'SpreadsheetCell' }
 const INITIAL_CELLS = getCellList(10, 10, EMPTY_CELL)
 
@@ -92,7 +82,6 @@ const value$ = most
 			R.pipe(R.mergeDeepRight(originalCell), R.assoc('value', value)),
 			matrix,
 		)
-
 	}, INITIAL_CELLS)
 
 const Spreadsheet = SpreadsheetContainer(value$)
