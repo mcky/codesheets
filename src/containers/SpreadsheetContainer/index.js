@@ -1,3 +1,1 @@
-import SpreadsheetContainer from './SpreadsheetContainer'
-
-export default SpreadsheetContainer
+export { default } from './SpreadsheetContainer'
