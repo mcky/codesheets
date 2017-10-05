@@ -13,7 +13,13 @@
     "recompose": "^0.24.0"
   },
   "devDependencies": {
+    "eslint": "^4.8.0",
+    "eslint-config-airbnb": "^15.1.0",
+    "eslint-config-prettier": "^2.6.0",
+    "eslint-plugin-import": "^2.7.0",
+    "eslint-plugin-react": "^7.4.0",
     "patch-package": "^3.5.0",
+    "prettier": "^1.7.4",
     "react-scripts": "^1.0.14"
   },
   "scripts": {
@@ -21,6 +27,9 @@
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
-    "prepare": "patch-package"
+    "prepare": "patch-package",
+    "lint:js": "eslint 'src/**/*.{js,jsx}'",
+    "prettier:js": "prettier --write 'src/**/*.{js,jsx}'",
+    "format:js": "npm run prettier:js && npm run lint:js -- --fix"
   }
 }
