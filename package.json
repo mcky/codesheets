@@ -13,12 +13,14 @@
     "recompose": "^0.24.0"
   },
   "devDependencies": {
-    "react-scripts": "1.0.10"
+    "patch-package": "^3.5.0",
+    "react-scripts": "^1.0.14"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "prepare": "patch-package"
   }
 }

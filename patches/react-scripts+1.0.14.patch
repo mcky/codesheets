@@ -1,0 +1,56 @@
+diff --git a/node_modules/react-scripts/config/webpack.config.dev.js b/node_modules/react-scripts/config/webpack.config.dev.js
+index 44669e6..16646e4 100644
+--- a/node_modules/react-scripts/config/webpack.config.dev.js
++++ b/node_modules/react-scripts/config/webpack.config.dev.js
+@@ -20,6 +20,8 @@ const ModuleScopePlugin = require('react-dev-utils/ModuleScopePlugin');
+ const getClientEnvironment = require('./env');
+ const paths = require('./paths');
+
++const overrideConfig = require('../../../cra-overrides.js')
++
+ // Webpack uses `publicPath` to determine where the app is being served from.
+ // In development, we always serve from the root. This makes config easier.
+ const publicPath = '/';
+@@ -33,7 +35,7 @@ const env = getClientEnvironment(publicUrl);
+ // This is the development configuration.
+ // It is focused on developer experience and fast rebuilds.
+ // The production configuration is different and lives in a separate file.
+-module.exports = {
++const config = {
+   // You may want 'eval' instead if you prefer to see the compiled output in DevTools.
+   // See the discussion in https://github.com/facebookincubator/create-react-app/issues/343.
+   devtool: 'cheap-module-source-map',
+@@ -287,3 +289,5 @@ module.exports = {
+     hints: false,
+   },
+ };
++
++module.exports = overrideConfig(config, true)
+diff --git a/node_modules/react-scripts/config/webpack.config.prod.js b/node_modules/react-scripts/config/webpack.config.prod.js
+index ef4ea1b..63a05a7 100644
+--- a/node_modules/react-scripts/config/webpack.config.prod.js
++++ b/node_modules/react-scripts/config/webpack.config.prod.js
+@@ -21,6 +21,8 @@ const ModuleScopePlugin = require('react-dev-utils/ModuleScopePlugin');
+ const paths = require('./paths');
+ const getClientEnvironment = require('./env');
+
++const overrideConfig = require('../../../cra-overrides.js')
++
+ // Webpack uses `publicPath` to determine where the app is being served from.
+ // It requires a trailing slash, or the file assets will get an incorrect path.
+ const publicPath = paths.servedPath;
+@@ -57,7 +59,7 @@ const extractTextPluginOptions = shouldUseRelativeAssetPaths
+ // This is the production configuration.
+ // It compiles slowly and is focused on producing a fast and minimal bundle.
+ // The development configuration is different and lives in a separate file.
+-module.exports = {
++const config = {
+   // Don't attempt to continue if there are any errors.
+   bail: true,
+   // We generate sourcemaps in production. This is slow but gives good results.
+@@ -359,3 +361,5 @@ module.exports = {
+     child_process: 'empty',
+   },
+ };
++
++module.exports = overrideConfig(config, false)
