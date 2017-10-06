@@ -2,7 +2,11 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 
 import App from './containers/App'
+import store from './state'
 
 import './index.css'
 
-ReactDOM.render(React.createElement(App), document.getElementById('root'))
+ReactDOM.render(
+	React.createElement(App, { store }),
+	document.getElementById('root'),
+)
