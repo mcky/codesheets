@@ -8,9 +8,9 @@
     "most": "^1.5.0",
     "prop-types": "^15.6.0",
     "ramda": "^0.24.1",
-    "react": "^15.6.1",
+    "react": "^16.0.0",
     "react-datasheet": "^1.2.12",
-    "react-dom": "^15.6.1",
+    "react-dom": "^16.0.0",
     "recompose": "^0.24.0"
   },
   "devDependencies": {
