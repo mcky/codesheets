@@ -1,30 +1,15 @@
 import R from 'ramda'
 import * as most from 'most'
-import { create } from '@most/create'
 import { hold } from '@most/hold'
 
 import { hasProps, scanPairs, getCellList, cellIndexFromRef } from './utils'
 
+const formatSheetObject = (time, sheet) =>
+	R.pipe(R.toPairs, R.map(R.append(time)))(sheet)
+
 const getValues = initialSheet => {
-	let change = (...args) => {
-		console.warn('event missed:', args)
-	}
-
-	const change$ = create(add => {
-		change = add
-
-		const startTime = Date.now()
-
-		R.pipe(
-			R.toPairs,
-			R.map(R.append(startTime)),
-			R.forEach(pair => {
-				change(pair)
-			}),
-		)(initialSheet)
-
-		return () => {}
-	})
+	const initialValues = formatSheetObject(Date.now(), initialSheet)
+	const change$ = most.from(initialValues)
 
 	const constantValue$ = most
 		.from(change$)
