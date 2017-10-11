@@ -20,7 +20,7 @@ import { merge, just, from, fromPromise } from 'most'
 import { createReducer } from './utils'
 import { hasProps, createSheet } from '../utils'
 
-import initialSheet from '../example-sheet.js'
+import initialSheet from '../example-sheet'
 
 export const CELL_CHANGED = 'CELL_CHANGED'
 export const CONSTANT_CHANGED = 'CONSTANT_CHANGED'
