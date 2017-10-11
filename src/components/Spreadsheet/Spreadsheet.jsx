@@ -7,7 +7,7 @@ import 'react-datasheet/lib/react-datasheet.css'
 const Spreadsheet = ({ values }) => (
 	<ReactDataSheet
 		data={values}
-		valueRenderer={cell => cell.value || ''}
+		valueRenderer={cell => cell.computedValue || cell.value || ''}
 		overflow="clip"
 	/>
 )
