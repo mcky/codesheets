@@ -6,12 +6,22 @@ import {
 	assoc,
 	repeat,
 	pipe,
-	toUpper,
 	split,
+	toUpper,
 	map,
-	partition,
-	is,
 	add,
+	addIndex,
+	range,
+	inc,
+	dec,
+	xprod,
+	join,
+	of,
+	append,
+	fromPairs,
+	match,
+	reduce,
+	adjust,
 } from 'ramda'
 
 const hasProps = curry((props, obj) => props.every(prop => obj[prop]))
@@ -20,20 +30,54 @@ const hasRefWithValue = ref => where({ 0: equals(ref), 1: has('value') })
 
 const scanPairs = (values, [ref, cell]) => assoc(ref, cell, values)
 
-const getCellList = (rows, columns, cell) => repeat(repeat(cell, rows), columns)
+const createMatrix = (rows, columns, value) =>
+	repeat(repeat(value, rows), columns)
+
+const alphabet = 'abcdefghijklmnopqrstuvwxyz'
+const cellLetter = i =>
+	(i >= 26 ? cellLetter(((i / 26) >> 0) - 1) : '') + alphabet[(i % 26) >> 0]
+
+const mapIndexed = addIndex(map)
+
+const getLetterRange = pipe(range(0), mapIndexed(cellLetter))
+const getNumRange = pipe(inc, range(1))
+
+const createSheet = (w, h, initial) => {
+	const letters = getLetterRange(w)
+	const numbers = getNumRange(h)
+
+	return pipe(xprod, map(join('')), map(pipe(of, append(initial))), fromPairs)(
+		letters,
+		numbers,
+	)
+}
 
 const charIndex = char => parseInt(char, 36) - 10
 
-const cellIndexFromRef = pipe(
-	toUpper,
+const splitReference = match(/[A-Z]+|[0-9]+/g)
+
+const cellLetterIndex = pipe(
 	split(''),
-	map(cell => (isNaN(Number(cell)) ? cell : Number(cell))),
-	partition(is(Number)),
-	([numbers, letters]) => {
-		const x = letters.map((l, i) => charIndex(l) + i * 26).reduce(add)
-		const y = Number(numbers.join('')) - 1
-		return [y, x]
-	},
+	mapIndexed((l, i) => charIndex(l) + i * 26),
+	reduce(add, 0),
 )
 
-export { hasProps, hasRefWithValue, scanPairs, getCellList, cellIndexFromRef }
+const cellNumberIndex = pipe(Number, dec)
+
+const cellIndexFromRef = pipe(
+	toUpper,
+	splitReference,
+	adjust(cellLetterIndex, 0),
+	adjust(cellNumberIndex, 1),
+)
+
+export {
+	hasProps,
+	hasRefWithValue,
+	scanPairs,
+	createSheet,
+	createMatrix,
+	splitReference,
+	cellLetterIndex,
+	cellIndexFromRef,
+}
