@@ -5,6 +5,7 @@ import {
 	append,
 	prop,
 	props,
+	pathEq,
 	isEmpty,
 	all,
 	has,
@@ -48,12 +49,13 @@ export const startEpic = action$ =>
 		.map(cellChanged)
 
 const getPayload = prop('payload')
+const cellType = type => pathEq([1, type], true)
 
 export const constantValueEpic = action$ =>
 	action$
 		.thru(select(CELL_CHANGED))
 		.map(getPayload)
-		.filter(([, cell]) => cell.isConstant)
+		.filter(cellType('isConstant'))
 		.chain(cell =>
 			merge(
 				just(constantChanged(cell)),
@@ -65,7 +67,7 @@ export const formulaChangeEpic = action$ =>
 	action$
 		.thru(select(CELL_CHANGED))
 		.map(getPayload)
-		.filter(([, cell]) => cell.isFormula)
+		.filter(cellType('isFormula'))
 		.map(formulaChanged)
 
 export const formulaValueEpic = (action$, state$) => {
