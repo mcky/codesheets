@@ -1,3 +1,8 @@
+.HeaderCell,
 .SpreadsheetCell {
 	padding: 5px!important;
+}
+
+.HeaderCell {
+	background: #F5F5F5!important;
 }
