@@ -6,23 +6,13 @@ import {
 } from 'redux-most'
 import { composeWithDevTools } from 'redux-devtools-extension'
 
-import cells, {
-	startEpic,
-	constantValueEpic,
-	formulaChangeEpic,
-	formulaValueEpic,
-} from './cells'
+import cells, { startEpic, valueChangeEpic, formulaValueEpic } from './cells'
 
 const rootReducer = combineReducers({
 	cells,
 })
 
-const rootEpic = combineEpics([
-	startEpic,
-	constantValueEpic,
-	formulaChangeEpic,
-	formulaValueEpic,
-])
+const rootEpic = combineEpics([startEpic, valueChangeEpic, formulaValueEpic])
 
 const epicMiddleware = createEpicMiddleware(rootEpic)
 

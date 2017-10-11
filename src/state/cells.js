@@ -14,6 +14,7 @@ import {
 	apply,
 	assocPath,
 	assoc,
+	cond,
 } from 'ramda'
 import { createAction } from 'redux-actions'
 import { select } from 'redux-most'
@@ -51,24 +52,23 @@ export const startEpic = action$ =>
 const getPayload = prop('payload')
 const cellType = type => pathEq([1, type], true)
 
-export const constantValueEpic = action$ =>
+export const valueChangeEpic = action$ =>
 	action$
 		.thru(select(CELL_CHANGED))
 		.map(getPayload)
-		.filter(cellType('isConstant'))
-		.chain(cell =>
-			merge(
-				just(constantChanged(cell)),
-				just(constantValueChanged([cell[0], cell[1].value])),
-			),
+		.chain(
+			cond([
+				[
+					cellType('isConstant'),
+					cell =>
+						merge(
+							just(constantChanged(cell)),
+							just(constantValueChanged([cell[0], cell[1].value])),
+						),
+				],
+				[cellType('isFormula'), pipe(formulaChanged, just)],
+			]),
 		)
-
-export const formulaChangeEpic = action$ =>
-	action$
-		.thru(select(CELL_CHANGED))
-		.map(getPayload)
-		.filter(cellType('isFormula'))
-		.map(formulaChanged)
 
 export const formulaValueEpic = (action$, state$) => {
 	const formulaChange$ = action$.thru(select(FORMULA_CHANGED)).map(getPayload)
