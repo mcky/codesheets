@@ -1,4 +1,8 @@
 import {
+	pipe,
+	toPairs,
+	map,
+	append,
 	prop,
 	props,
 	isEmpty,
@@ -16,6 +20,8 @@ import { merge, just, from, fromPromise } from 'most'
 import { createReducer } from './utils'
 import { hasProps, createSheet } from '../utils'
 
+import initialSheet from '../example-sheet.js'
+
 export const CELL_CHANGED = 'CELL_CHANGED'
 export const CONSTANT_CHANGED = 'CONSTANT_CHANGED'
 export const FORMULA_CHANGED = 'FORMULA_CHANGED'
@@ -30,10 +36,15 @@ export const formulaChanged = createAction(FORMULA_CHANGED)
 export const constantValueChanged = createAction(CONSTANT_VALUE_CHANGED)
 export const formulaValueChanged = createAction(FORMULA_VALUE_CHANGED)
 
+const startTime = Date.now()
+const formatInitialSheet = pipe(toPairs, map(append(startTime)))
+const initialCell$ = from(formatInitialSheet(initialSheet))
+
 export const startEpic = action$ =>
 	action$
 		.thru(select('@@redux-most/EPIC_BEGIN'))
 		.skip(1)
+		.merge(initialCell$)
 		.map(cellChanged)
 
 const getPayload = prop('payload')
